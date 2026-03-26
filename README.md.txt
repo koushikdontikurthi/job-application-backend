@@ -1,15 +1,30 @@
-Job Application Backend API
+# Job Application Backend
 
-I am Building this project to showcase my resume and strength my skills.
+A backend API project built with Node.js, Express, and PostgreSQL.
 
-What it is: “Job Application Backend API”
+## Current Progress
+- Input validation helper
+- PostgreSQL setup using Docker
+- Database connection pool with pg
+- DB health check route
+- Schema created for users, jobs, and applications
 
-How to run:
+## Tech Stack
+- Node.js
+- Express
+- PostgreSQL
+- Docker
+- pg
 
-npm i
+## Project Structure
+- `src/app.js` - Express app setup
+- `src/server.js` - server entry point
+- `src/db/index.js` - PostgreSQL connection pool
+- `src/routes/healthRoutes.js` - database health route
+- `schema.sql` - database schema
+- `docker-compose.yml` - PostgreSQL container setup
 
-npm start
-
-Test:
-
-open http://localhost:3000/health
+## Setup
+1. Install dependencies
+   ```bash
+   npm install

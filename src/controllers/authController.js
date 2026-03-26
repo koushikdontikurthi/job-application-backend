@@ -1,4 +1,3 @@
-// src/controllers/authController.js
 const requireFields = require("../utils/requireFields");
 
 function signup(req, res) {
