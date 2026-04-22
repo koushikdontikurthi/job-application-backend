@@ -1,23 +1,37 @@
-const requireFields = require("../utils/requireFields");
+const bcrypt = require("bcrypt");
+const { query } = require("../db/query");
 
-function signup(req, res) {
-  // Step 1: validate input
-  const check = requireFields(req.body, ["email", "password"]);
+const signup = async (req, res, next) =>{
+    try {
+        const { email,password } = req.body;
+        if(!email || !password) {
+          return res.status(400).json({
+            code: 'VALIDATION_ERROR',
+            message: 'Email and password are required'
+          });
+        }
 
-  // Step 2: if invalid, return immediately
-  if (!check.ok) {
-    return res.status(check.status).json({
-      code: "VALIDATION_ERROR",
-      message: check.message,
-      field: check.field
-    });
-  }
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
 
-  // Step 3: if valid, continue (for now just return success)
-  return res.status(201).json({
-    ok: true,
-    message: "Signup input looks good  (DB part later)"
-  });
-}
+        const result = await query(
+            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at',
+            [email, passwordHash]
+        );
 
+        return res.status(201).json({
+          message: 'User created successfully',
+          user: result.rows[0]
+        });
+    } catch (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({
+          code: 'DUPLICATE_EMAIL',
+          message: 'Email already exists'
+        });
+      }
+      next(error);
+    }
+  };
+          
 module.exports = { signup };

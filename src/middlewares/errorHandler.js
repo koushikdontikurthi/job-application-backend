@@ -1,13 +1,9 @@
 function errorHandler(err, req, res, next) {
-    console.error("Error caught:", err);
+    console.error('Error:', err);
 
-    const statusCode = err.statusCode || 500;
-
-
-    res.status(statusCode).json({
-        code: err.code || "INTERNAL_SERVER_ERROR",
-        message: err.message || "An unexpected error occurred.",
-        fields: err.fields || null
+    res.status(500).json({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred.',
     });
 }
 
