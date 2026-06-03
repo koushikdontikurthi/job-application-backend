@@ -4,11 +4,14 @@ const app = express();
 
 const errorHandler = require("./middlewares/errorHandler");
 const authRoutes = require("./routes/authRoutes");
+const jobRoutes = require("./routes/jobRoutes");
 
 app.use(express.json());
 app.get('/health', (req, res) => {
     res.json({ ok: true, message: 'server is running' });
 });
+
+app.use('/jobs', jobRoutes);
 
 
 app.use('/auth', authRoutes);
