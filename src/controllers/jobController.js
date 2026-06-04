@@ -12,9 +12,7 @@ const createJob = async (req, res, next) => {
     }
 
     const result = await query(
-      `INSERT INTO jobs (title, company)
-       VALUES ($1, $2)
-       RETURNING id, title, company, created_at`,
+      "INSERT INTO jobs (title, company) VALUES ($1, $2) RETURNING id, title, company, created_at",
       [title, company]
     );
 
@@ -27,4 +25,18 @@ const createJob = async (req, res, next) => {
   }
 };
 
-module.exports = { createJob };
+const getJobs = async (req, res, next) => {
+  try {
+    const result = await query(
+      "SELECT id, title, company, created_at FROM jobs ORDER BY created_at DESC LIMIT 20"
+    );
+
+    return res.status(200).json({
+      jobs: result.rows
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createJob, getJobs };
