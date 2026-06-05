@@ -1,30 +1,106 @@
 # Job Application Backend
 
-A backend API project built with Node.js, Express, and PostgreSQL.
-
-## Current Progress
-- Input validation helper
-- PostgreSQL setup using Docker
-- Database connection pool with pg
-- DB health check route
-- Schema created for users, jobs, and applications
+A Node.js, Express, and PostgreSQL backend for tracking jobs and applications.
 
 ## Tech Stack
+
 - Node.js
 - Express
 - PostgreSQL
 - Docker
-- pg
+- bcrypt
+- jsonwebtoken
+- node-postgres (`pg`)
 
-## Project Structure
-- `src/app.js` - Express app setup
-- `src/server.js` - server entry point
-- `src/db/index.js` - PostgreSQL connection pool
-- `src/routes/healthRoutes.js` - database health route
-- `schema.sql` - database schema
-- `docker-compose.yml` - PostgreSQL container setup
+## Current Features
 
-## Setup
-1. Install dependencies
-   ```bash
-   npm install
+- Health check endpoint
+- User signup with bcrypt password hashing
+- User login with JWT
+- Protected `/auth/me` endpoint
+- Create jobs with authenticated ownership
+- List jobs
+- Get job by id
+- Update jobs with owner validation
+- Soft delete jobs with owner validation
+
+## Apply Flow
+
+1. User signs up with email and password.
+2. Password is hashed before saving.
+3. User logs in with email and password.
+4. Server returns a signed JWT.
+5. User sends the JWT in the `Authorization` header.
+6. User creates a job, and the job stores `user_id`.
+7. Owner can update or delete their own jobs.
+8. Later, users can apply to jobs through an applications endpoint.
+
+## API Examples
+
+### Health Check
+
+```bash
+curl http://localhost:3000/health
+```
+
+### Signup
+
+```bash
+curl -X POST http://localhost:3000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"test@example.com\",\"password\":\"secret123\"}"
+```
+
+### Login
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"test@example.com\",\"password\":\"secret123\"}"
+```
+
+Copy the `token` value from the login response.
+
+### Get Current User
+
+```bash
+curl http://localhost:3000/auth/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Create Job
+
+```bash
+curl -X POST http://localhost:3000/jobs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d "{\"title\":\"Backend Engineer\",\"company\":\"Google\"}"
+```
+
+### List Jobs
+
+```bash
+curl http://localhost:3000/jobs
+```
+
+### Get Job By Id
+
+```bash
+curl http://localhost:3000/jobs/1
+```
+
+### Update Job
+
+```bash
+curl -X PUT http://localhost:3000/jobs/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d "{\"title\":\"Senior Backend Engineer\",\"company\":\"Google\"}"
+```
+
+### Delete Job
+
+```bash
+curl -X DELETE http://localhost:3000/jobs/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
