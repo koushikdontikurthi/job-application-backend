@@ -29,7 +29,7 @@ const createJob = async (req, res, next) => {
 const getJobs = async (req, res, next) => {
   try {
     const result = await query(
-      "SELECT id, title, company, created_at FROM jobs ORDER BY created_at DESC LIMIT 20"
+    "SELECT id, title, company, user_id, created_at FROM jobs WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 20"
     );
 
     return res.status(200).json({
@@ -39,12 +39,14 @@ const getJobs = async (req, res, next) => {
     next(error);
   }
 };
+
+
 const getJobById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
     const result = await query(
-      "SELECT id, title, company, created_at FROM jobs WHERE id = $1",
+      "SELECT id, title, company, user_id, created_at FROM jobs WHERE id = $1 AND deleted_at IS NULL"
       [id]
     );
 
@@ -108,4 +110,43 @@ const updateJob = async (req, res, next) => {
         next(error);
     }
 };
-module.exports = { createJob, getJobs, getJobById, updateJob };
+
+const deleteJob = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const existingJobResult = await query(
+      "SELECT id, user_id FROM jobs WHERE id = $1 AND deleted_at IS NULL",
+      [id]
+    );
+
+    const existingJob = existingJobResult.rows[0];
+
+    if (!existingJob) {
+      return res.status(404).json({
+        code: "JOB_NOT_FOUND",
+        message: "Job not found"
+      });
+    }
+
+    if (existingJob.user_id !== userId) {
+      return res.status(403).json({
+        code: "FORBIDDEN",
+        message: "You are not allowed to delete this job"
+      });
+    }
+
+    await query(
+      "UPDATE jobs SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1",
+      [id]
+    );
+
+    return res.status(200).json({
+      message: "Job deleted successfully"
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+module.exports = { createJob, getJobs, getJobById, updateJob, deleteJob };
