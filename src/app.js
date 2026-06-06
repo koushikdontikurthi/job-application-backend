@@ -5,6 +5,7 @@ const app = express();
 const errorHandler = require("./middlewares/errorHandler");
 const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");
+const applicationRoutes = require("./routes/applicationRoutes");
 
 app.use(express.json());
 app.get('/health', (req, res) => {
@@ -12,6 +13,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/jobs', jobRoutes);
+app.use('/applications', applicationRoutes);
 
 
 app.use('/auth', authRoutes);
