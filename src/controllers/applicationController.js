@@ -53,6 +53,10 @@ const getApplicationsForJob = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
     const result = await query(
       `SELECT
          a.id AS application_id,
@@ -63,12 +67,14 @@ const getApplicationsForJob = async (req, res, next) => {
        FROM applications a
        JOIN users u ON a.user_id = u.id
        WHERE a.job_id = $1
-       ORDER BY a.created_at DESC
-       LIMIT 20`,
-      [id]
+       ORDER BY a.created_at DESC, a.id DESC
+       LIMIT $2 OFFSET $3`,
+      [id, limit, offset]
     );
 
     return res.status(200).json({
+      page,
+      limit,
       applications: result.rows
     });
   } catch (error) {
