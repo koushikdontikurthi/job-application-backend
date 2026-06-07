@@ -1,4 +1,4 @@
-const { pool } = require("../db/query");
+const { pool, query } = require("../db/query");
 
 const createApplication = async (req, res, next) => {
   const client = await pool.connect();
@@ -49,4 +49,31 @@ const createApplication = async (req, res, next) => {
   }
 };
 
-module.exports = { createApplication };
+const getApplicationsForJob = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `SELECT
+         a.id AS application_id,
+         a.job_id,
+         a.user_id,
+         u.email AS applicant_email,
+         a.created_at AS applied_at
+       FROM applications a
+       JOIN users u ON a.user_id = u.id
+       WHERE a.job_id = $1
+       ORDER BY a.created_at DESC
+       LIMIT 20`,
+      [id]
+    );
+
+    return res.status(200).json({
+      applications: result.rows
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createApplication, getApplicationsForJob };
