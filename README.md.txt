@@ -104,3 +104,25 @@ curl -X PUT http://localhost:3000/jobs/1 \
 curl -X DELETE http://localhost:3000/jobs/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
+## Applications
+
+### Apply to a job
+
+```bash
+curl -X POST http://localhost:3000/applications \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d "{\"jobId\":1}"
+
+### View my applications
+
+```bash
+curl http://localhost:3000/applications/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+### view applications for a job
+
+```bash
+curl "http://localhost:3000/jobs/2/applications?page=1&limit=5" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
