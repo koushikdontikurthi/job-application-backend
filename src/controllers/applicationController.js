@@ -81,5 +81,30 @@ const getApplicationsForJob = async (req, res, next) => {
     next(error);
   }
 };
+const getMyApplications = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
 
-module.exports = { createApplication, getApplicationsForJob };
+    const result = await query(
+      `SELECT
+         a.id AS application_id,
+         a.job_id,
+         j.title,
+         j.company,
+         a.created_at AS applied_at
+       FROM applications a
+       JOIN jobs j ON a.job_id = j.id
+       WHERE a.user_id = $1
+       ORDER BY a.created_at DESC, a.id DESC`,
+      [userId]
+    );
+
+    return res.status(200).json({
+      applications: result.rows
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createApplication, getApplicationsForJob, getMyApplications };
