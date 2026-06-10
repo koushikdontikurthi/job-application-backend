@@ -46,7 +46,7 @@ const getJobById = async (req, res, next) => {
     const { id } = req.params;
 
     const result = await query(
-      "SELECT id, title, company, user_id, created_at FROM jobs WHERE id = $1 AND deleted_at IS NULL"
+      "SELECT id, title, company, user_id, created_at FROM jobs WHERE id = $1 AND deleted_at IS NULL",
       [id]
     );
 
@@ -136,13 +136,14 @@ const deleteJob = async (req, res, next) => {
       });
     }
 
-    await query(
-      "UPDATE jobs SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1",
+    const result = await query(
+      "UPDATE jobs SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
       [id]
     );
 
     return res.status(200).json({
-      message: "Job deleted successfully"
+      message: "Job deleted successfully",
+      job: { id: result.rows[0].id }
     });
 
   } catch (error) {
