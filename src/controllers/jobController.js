@@ -141,11 +141,7 @@ const deleteJob = async (req, res, next) => {
       [id]
     );
 
-    return res.status(200).json({
-      message: "Job deleted successfully",
-      job: { id: result.rows[0].id }
-    });
-
+    return res.status(204).send();
   } catch (error) {
     next(error);
   }
