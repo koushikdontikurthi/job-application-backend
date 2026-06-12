@@ -21,7 +21,6 @@ app.use('/applications', applicationRoutes);
 
 app.use('/auth', authRoutes);
 
-
 app.use(errorHandler);
 
 module.exports = app;
