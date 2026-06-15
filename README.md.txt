@@ -12,6 +12,99 @@ A Node.js, Express, and PostgreSQL backend for tracking jobs and applications.
 - jsonwebtoken
 - node-postgres (`pg`)
 
+## Prerequisites
+
+Before running the project, make sure the following are installed:
+
+- Node.js
+- npm
+- Docker Desktop
+- Git
+
+Verify installation:
+
+```bash
+node -v
+npm -v
+docker -v
+git --version
+```
+
+## Setup / Quickstart
+
+**1. Clone the repository**
+
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd job-application-backend
+```
+
+**2. Install dependencies**
+
+```bash
+npm install
+```
+
+**3. Create environment file**
+
+```bash
+cp .env.example .env
+```
+
+Update the values as needed.
+
+**4. Start Docker**
+
+```bash
+docker start job_backend_db
+```
+
+**5. Run database schema**
+
+```bash
+docker cp schema.sql job_backend_db:/schema.sql
+docker exec job_backend_db psql -U postgres -d jobdb -f //schema.sql
+```
+
+**6. Run seed script**
+
+```bash
+npm run seed
+```
+
+**7. Start the server**
+
+```bash
+npm start
+```
+
+**8. Verify**
+
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+
+```json
+{ "ok": true, "message": "server is running" }
+```
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=jobdb
+JWT_SECRET=your_super_secret_jwt_key
+NODE_ENV=development
+```
+
 ## Current Features
 
 - Health check endpoint
@@ -23,17 +116,9 @@ A Node.js, Express, and PostgreSQL backend for tracking jobs and applications.
 - Get job by id
 - Update jobs with owner validation
 - Soft delete jobs with owner validation
-
-## Apply Flow
-
-1. User signs up with email and password.
-2. Password is hashed before saving.
-3. User logs in with email and password.
-4. Server returns a signed JWT.
-5. User sends the JWT in the `Authorization` header.
-6. User creates a job, and the job stores `user_id`.
-7. Owner can update or delete their own jobs.
-8. Later, users can apply to jobs through an applications endpoint.
+- Apply to jobs with duplicate prevention
+- Recruiter view of applicants with pagination
+- Candidate view of their own applications
 
 ## API Examples
 
@@ -104,6 +189,7 @@ curl -X PUT http://localhost:3000/jobs/1 \
 curl -X DELETE http://localhost:3000/jobs/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
+
 ## Applications
 
 ### Apply to a job
@@ -113,14 +199,16 @@ curl -X POST http://localhost:3000/applications \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d "{\"jobId\":1}"
+```
 
 ### View my applications
 
 ```bash
 curl http://localhost:3000/applications/me \
   -H "Authorization: Bearer YOUR_TOKEN"
+```
 
-### view applications for a job
+### View applications for a job
 
 ```bash
 curl "http://localhost:3000/jobs/2/applications?page=1&limit=5" \
