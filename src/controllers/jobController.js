@@ -116,31 +116,17 @@ const deleteJob = async (req, res, next) => {
     const { id } = req.params;
     const userId = req.user.userId;
     const existingJobResult = await query(
-      "SELECT id, user_id FROM jobs WHERE id = $1 AND deleted_at IS NULL",
-      [id]
+      "UPDATE jobs SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING id",
+      [id, userId]
     );
-
     const existingJob = existingJobResult.rows[0];
-
     if (!existingJob) {
       return res.status(404).json({
         code: "JOB_NOT_FOUND",
-        message: "Job not found"
+        message: "Job not found or you are not allowed to delete this job"
       });
     }
-
-    if (existingJob.user_id !== userId) {
-      return res.status(403).json({
-        code: "FORBIDDEN",
-        message: "You are not allowed to delete this job"
-      });
-    }
-
-    const result = await query(
-      "UPDATE jobs SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
-      [id]
-    );
-
+    
     return res.status(204).send();
   } catch (error) {
     next(error);
