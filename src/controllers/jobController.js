@@ -5,13 +5,6 @@ const createJob = async (req, res, next) => {
     const { title, company } = req.body;
     const userId = req.user.userId;
 
-    if (!title || !company) {
-      return res.status(400).json({
-        code: "VALIDATION_ERROR",
-        message: "Title and company are required"
-      });
-    }
-
     const result = await query(
       "INSERT INTO jobs (title, company, user_id) VALUES ($1, $2, $3) RETURNING id, title, company, user_id, created_at",
       [title, company, userId]
@@ -71,12 +64,6 @@ const updateJob = async (req, res, next) => {
     const { id } = req.params;
     const { title, company } = req.body;
     const userId = req.user.userId;
-    if (!title || !company) {
-      return res.status(400).json({
-        code: "VALIDATION_ERROR",
-        message: "Title and company are required"
-      });
-    }
     const existingJobResult = await query(
       "SELECT id, user_id FROM jobs WHERE id = $1",
       [id]

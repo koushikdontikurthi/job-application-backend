@@ -6,13 +6,6 @@ const signup = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        code: 'VALIDATION_ERROR',
-        message: 'Email and password are required'
-      });
-    }
-
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
@@ -39,13 +32,6 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        code: 'VALIDATION_ERROR',
-        message: 'Email and password are required'
-      });
-    }
 
     const result = await query(
       'SELECT id, email, password_hash FROM users WHERE email = $1',

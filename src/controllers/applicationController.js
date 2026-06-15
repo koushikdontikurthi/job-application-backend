@@ -4,12 +4,6 @@ const createApplication = async (req, res, next) => {
     const { jobId } = req.body;
     const userId = req.user.userId;
 
-    if (!jobId) {
-      return res.status(400).json({
-        code: "VALIDATION_ERROR",
-        message: "Job id is required"
-      });
-    }
     try{
     const result = await withTransaction(async (client) => {
       return await client.query(
