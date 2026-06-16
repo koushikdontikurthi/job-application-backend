@@ -3,7 +3,7 @@ const express = require("express");
 const timeout = require('connect-timeout');
 const rateLimit = require('express-rate-limit');
 
-
+const cors = require('cors');
 const {requestLogger} = require("./middlewares/requestLogger");
 const errorHandler = require("./middlewares/errorHandler");
 const authRoutes = require("./routes/authRoutes");
@@ -21,8 +21,10 @@ const limiter = rateLimit({
     }
 });
 
+
+app.use(cors());
 app.use(limiter);
-app.use(express.json());
+app.use(express.json({limit: '10kb'}));
 app.use(timeout('5s'));
 app.use(requestLogger);
 app.get('/health', (req, res) => {
