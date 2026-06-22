@@ -1,4 +1,5 @@
 const { query } = require("../db/query");
+const {get, set} = require("../cache");
 
 const createJob = async (req, res, next) => {
   try {
@@ -37,6 +38,12 @@ const getJobs = async (req, res, next) => {
 const getJobById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const cacheKey = `job_${id}`;
+    const cachedJob = get(cacheKey);
+    if (cachedJob) {
+      return res.status(200).json({ job: cachedJob });
+    }
+
 
     const result = await query(
       "SELECT id, title, company, user_id, created_at FROM jobs WHERE id = $1 AND deleted_at IS NULL",
@@ -52,13 +59,16 @@ const getJobById = async (req, res, next) => {
       });
     }
 
+    set(cacheKey, job, 60000); // Cache for 1 minute
     return res.status(200).json({
       job
     });
   } catch (error) {
     next(error);
   }
+  
 };
+
 const updateJob = async (req, res, next) => {
     try {
     const { id } = req.params;
