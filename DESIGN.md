@@ -696,5 +696,119 @@ Using a message queue provides:
 * Separation of notification processing from the main application flow
 * Improved reliability when external services are unavailable
 
+## Locking and Concurrency
+
+### Where UNIQUE inserts can cause lock contention
+
+In this project, lock contention can happen when multiple requests try to apply to the same job for the same user at the same time.
+
+The `applications` table has the following constraint:
+
+```sql
+UNIQUE(user_id, job_id)
+```
+
+This constraint prevents duplicate applications.
+
+Unsafe:
+
+```text
+Request A inserts user_id = 1, job_id = 2
+↓
+Request B inserts user_id = 1, job_id = 2 at the same time
+```
+
+PostgreSQL must protect the unique constraint, so one transaction may wait while the other completes.
+
+Safe:
+
+```sql
+ON CONFLICT (user_id, job_id)
+DO NOTHING
+```
+
+This makes repeated apply requests safe. Only one application is created, and duplicate requests do not create duplicate rows.
+
+---
+
+### Race condition in updateJob
+
+The current `updateJob` implementation first checks ownership and then performs the update.
+
+Current flow:
+
+```text
+SELECT job by id
+↓
+Check ownership
+↓
+UPDATE job
+```
+
+There is a small time gap between the `SELECT` and the `UPDATE`.
+
+Unsafe:
+
+```text
+Request A selects job 1
+↓
+Request B updates or deletes job 1
+↓
+Request A continues and updates stale data
+```
+
+The job can change after it has been checked but before it is updated.
+
+---
+
+### How SELECT FOR UPDATE fixes it
+
+`SELECT FOR UPDATE` locks the selected row inside a transaction.
+
+Safe:
+
+```text
+BEGIN
+↓
+SELECT job FOR UPDATE
+↓
+Check ownership
+↓
+UPDATE job
+↓
+COMMIT
+```
+
+Example:
+
+```sql
+BEGIN;
+
+SELECT id, user_id, title, company
+FROM jobs
+WHERE id = $1
+FOR UPDATE;
+
+UPDATE jobs
+SET title = $2,
+    company = $3
+WHERE id = $1;
+
+COMMIT;
+```
+
+By locking the row, other transactions cannot modify the same job until the current transaction finishes.
+
+If something fails:
+
+```sql
+ROLLBACK;
+```
+
+The transaction is rolled back, the lock is released, and no partial changes are saved.
+
+`SELECT FOR UPDATE` is useful whenever the backend needs to read a row, make a decision, and then safely update that same row without another transaction changing it in between.
+
+
 
 ---
