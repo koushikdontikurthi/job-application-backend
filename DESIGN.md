@@ -809,6 +809,24 @@ The transaction is rolled back, the lock is released, and no partial changes are
 
 `SELECT FOR UPDATE` is useful whenever the backend needs to read a row, make a decision, and then safely update that same row without another transaction changing it in between.
 
+## Architecture Decisions
 
+### Why a monolith?
+All application code runs in a single Node.js process. Microservices would add 
+operational complexity (service discovery, network calls between services, 
+distributed tracing) that isn't justified at this scale. A monolith is easier 
+to build, test, and deploy for a single-developer project.
+
+### Why PostgreSQL?
+The data has clear relationships — users own jobs, users apply to jobs. 
+PostgreSQL enforces integrity through PRIMARY KEY, FOREIGN KEY, UNIQUE, and 
+CHECK constraints. Transactions guarantee that partial failures don't leave 
+data in an inconsistent state. A document database would require enforcing 
+these rules in application code, which is error-prone.
+
+### Why Express?
+Lightweight and unopinionated. Every middleware, route, and error handler is 
+explicit — nothing is hidden. This makes the request lifecycle easy to reason 
+about and debug.
 
 ---
