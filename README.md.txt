@@ -214,3 +214,19 @@ curl http://localhost:3000/applications/me \
 curl "http://localhost:3000/jobs/2/applications?page=1&limit=5" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
+## Reliability Notes
+
+### Idempotency
+POST /applications uses ON CONFLICT DO NOTHING — safe to retry.
+Duplicate requests return 200 instead of creating duplicate rows.
+
+### Retry safety
+GET requests are always safe to retry — read-only, no side effects.
+PUT /jobs/:id is safe to retry — updates to the same value are harmless.
+DELETE /jobs/:id is safe to retry — soft delete is idempotent.
+POST /auth/signup is NOT safe to retry — second attempt returns 409.
+
+### Failure handling
+If the database is unavailable, all endpoints return 500.
+JWT errors return 401 with specific codes: TOKEN_EXPIRED or INVALID_TOKEN.
+Validation errors return 400 with code VALIDATION_ERROR.
