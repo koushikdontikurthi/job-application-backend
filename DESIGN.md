@@ -381,9 +381,7 @@ The applications table connects users and jobs.
 ```text
 Users
    |
-   |
 Applications
-   |
    |
 Jobs
 ```
@@ -584,5 +582,119 @@ Business rules are enforced using:
 * CHECK constraints
 
 This ensures correctness even if application validation fails.
+
+## Async Notifications
+
+### What triggers a notification?
+
+A notification is triggered when a user successfully applies to a job.
+
+Example:
+
+```text
+POST /applications
+↓
+Application created successfully
+↓
+Notify the job owner
+```
+
+---
+
+### Why not send notifications synchronously?
+
+Unsafe:
+
+```text
+Create application
+↓
+Send notification
+↓
+Return response
+```
+
+If the notification service is slow or unavailable, the user waits longer or the entire request may fail.
+
+Safe:
+
+```text
+Create application
+↓
+Return response
+↓
+Send notification separately
+```
+
+The primary operation is saving the application. The notification is a secondary task and should not delay the user's request.
+
+---
+
+### Current Implementation (Fire and Forget)
+
+After the database transaction commits successfully, trigger the notification without waiting for it to finish.
+
+This approach allows the API to immediately return a response while the notification runs in the background.
+
+---
+
+### Why after COMMIT?
+
+Unsafe:
+
+```text
+Send notification
+↓
+Commit transaction
+```
+
+If the transaction fails, the recruiter could receive a notification for an application that was never saved.
+
+Safe:
+
+```text
+Commit transaction
+↓
+Send notification
+```
+
+The notification is only sent after the application has been successfully committed to the database.
+
+---
+
+### Production Implementation (Message Queue)
+
+In production, notifications should be processed through a message queue instead of fire-and-forget.
+
+Example:
+
+```text
+POST /applications
+↓
+Commit transaction
+↓
+Publish notification event to queue
+↓
+Return response
+↓
+Background worker processes queue
+↓
+Send notification
+```
+
+Possible technologies:
+
+* BullMQ (Redis)
+* RabbitMQ
+* AWS SQS
+* Kafka
+
+Using a message queue provides:
+
+* Retry support for failed notifications
+* Better scalability
+* Faster API response times
+* Separation of notification processing from the main application flow
+* Improved reliability when external services are unavailable
+
 
 ---
