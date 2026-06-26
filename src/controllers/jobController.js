@@ -1,5 +1,5 @@
 const { query } = require("../db/query");
-const {get, set} = require("../cache");
+const {get, set, del} = require("../cache");
 
 const createJob = async (req, res, next) => {
   try {
@@ -98,7 +98,7 @@ const updateJob = async (req, res, next) => {
       "UPDATE jobs SET title = $1, company = $2 WHERE id = $3 RETURNING id, title, company, user_id, created_at",
       [title, company, id]
     );
-
+    del(`job_${id}`);
     return res.status(200).json({
       message: "Job updated successfully",
       job: result.rows[0]
@@ -123,7 +123,7 @@ const deleteJob = async (req, res, next) => {
         message: "Job not found or you are not allowed to delete this job"
       });
     }
-    
+    del(`job_${id}`);
     return res.status(204).send();
   } catch (error) {
     next(error);

@@ -17,4 +17,8 @@ const get = (key) => {
     return entry.value;
 };
 
-module.exports = { get, set };
+const del = (key) => {
+    delete store[key];
+};
+
+module.exports = { get, set, del };
