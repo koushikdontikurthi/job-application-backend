@@ -21,3 +21,7 @@ CREATE TABLE applications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, job_id)
 );
+
+CREATE INDEX idx_applications_job_id ON applications(job_id);
+CREATE INDEX idx_applications_user_id ON applications(user_id);
+CREATE INDEX idx_jobs_deleted_at_created_at ON jobs(deleted_at, created_at DESC);
