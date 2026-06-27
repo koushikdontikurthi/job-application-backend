@@ -19,12 +19,6 @@ const signup = async (req, res, next) => {
       user: result.rows[0]
     });
   } catch (error) {
-    if (error.code === '23505') {
-      return res.status(409).json({
-        code: 'DUPLICATE_EMAIL',
-        message: 'Email already exists'
-      });
-    }
     next(error);
   }
 };

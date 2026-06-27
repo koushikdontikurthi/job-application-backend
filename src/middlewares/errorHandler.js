@@ -3,6 +3,13 @@ function errorHandler(err, req, res, next) {
     
     console.error(err);
 
+    if (err.code === '23505') {
+    return res.status(409).json({
+        code: 'CONFLICT',
+        message: 'A record with that value already exists.'
+    });
+}
+
     if (process.env.NODE_ENV === 'development') {
         return res.status(statusCode).json({
             code: err.code || 'INTERNAL_SERVER_ERROR',
