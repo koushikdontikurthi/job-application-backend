@@ -877,5 +877,30 @@ The jobs table stores job postings. Every job has a user_id foreign key pointing
 The applications table is a junction table connecting users and jobs — it represents a many-to-many relationship. The key constraint is UNIQUE(user_id, job_id) which prevents a user from applying to the same job twice. I also use ON CONFLICT DO NOTHING on inserts to make the apply endpoint idempotent — safe to retry without creating duplicates.
 I have indexes on applications.job_id and applications.user_id for the recruiter and candidate query routes, and a composite index on jobs(deleted_at, created_at DESC) for the job listing query.
 
+## Security Checklist
+
+- [x] Parameterized queries everywhere — no SQL injection risk
+- [x] Passwords hashed with bcrypt (10 salt rounds)
+- [x] JWT secret in .env, not committed to Git
+- [x] All mutation routes protected by authMiddleware
+- [x] Ownership checks on PUT and DELETE /jobs/:id
+- [x] Per-route input validation on all mutation endpoints
+- [x] Rate limiting: 100 requests per 15 minutes per IP
+- [x] Body size limit: 10kb on express.json
+- [x] Stack traces hidden in production via NODE_ENV check
+- [x] No secrets hardcoded — all in .env
+
+## Apply Endpoint Walkthrough
+The request hits the auth middleware first — it verifies the JWT and attaches the user's id to req.user. Then the validator checks that jobId is present in the request body.
+In the controller, I use a transaction wrapper called withTransaction. It checks out a dedicated client from the PostgreSQL connection pool and runs BEGIN.
+Inside the transaction, I run a single INSERT:
+sqlINSERT INTO applications (user_id, job_id)
+VALUES ($1, $2)
+ON CONFLICT (user_id, job_id) DO NOTHING
+RETURNING id, user_id, job_id, created_at
+The user_id comes from req.user.userId — not from the request body. This is important because it means a user can never apply on behalf of someone else.
+The ON CONFLICT DO NOTHING makes the operation idempotent. If the user applies twice, the second insert does nothing and returns no rows.
+If the insert returns no rows — the application already existed — I return 200 with a message saying so. If it returns a row — new application — I return 201.
+If anything throws, withTransaction automatically runs ROLLBACK. If everything succeeds, it runs COMMIT and releases the client back to the pool.
 
 ---
