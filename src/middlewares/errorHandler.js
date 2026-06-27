@@ -5,15 +5,15 @@ function errorHandler(err, req, res, next) {
 
     if (process.env.NODE_ENV === 'development') {
         return res.status(statusCode).json({
-            code: 'INTERNAL_SERVER_ERROR',
+            code: err.code || 'INTERNAL_SERVER_ERROR',
             message: err.message,
             stack: err.stack
         });
     }
 
     return res.status(statusCode).json({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'An unexpected error occurred.'
+        code: err.code || 'INTERNAL_SERVER_ERROR',
+        message: statusCode === 500 ? 'An unexpected error occurred.' : err.message
     });
 }
 
