@@ -829,4 +829,53 @@ Lightweight and unopinionated. Every middleware, route, and error handler is
 explicit — nothing is hidden. This makes the request lifecycle easy to reason 
 about and debug.
 
+## API Versioning
+
+Routes are currently unversioned (e.g. /jobs, /auth, /applications).
+
+When breaking changes are needed, versioning can be added by prefixing 
+routes with /v1 in app.js:
+
+    app.use('/v1/jobs', jobRoutes);
+    app.use('/v1/auth', authRoutes);
+    app.use('/v1/applications', applicationRoutes);
+
+This allows old clients to continue using /v1 while new clients 
+use /v2 with updated response shapes.
+
+Current decision: no versioning until an external client depends on this API.
+
+## Pagination
+
+### Current implementation
+LIMIT/OFFSET pagination on GET /jobs/:id/applications.
+
+    SELECT ... LIMIT $1 OFFSET $2
+
+Simple to implement and sufficient for small datasets.
+
+### Tradeoff
+At large offsets, PostgreSQL scans and discards all skipped rows before 
+returning results. Performance degrades as page number increases.
+
+### Alternative: cursor pagination
+Use the last seen created_at or id as a cursor:
+
+    WHERE created_at < $1 ORDER BY created_at DESC LIMIT $2
+
+Faster at scale but cannot jump to arbitrary pages.
+
+### Current decision
+Offset pagination is kept for simplicity. Cursor pagination would be 
+considered if the dataset grows large enough that deep page queries 
+become slow.
+
+## Schema Talk Track
+My schema has three tables — users, jobs, and applications.
+The users table stores account credentials. Email has a UNIQUE constraint so no two accounts can share the same email. Passwords are stored as bcrypt hashes, never plain text.
+The jobs table stores job postings. Every job has a user_id foreign key pointing to the user who created it — that's how I enforce ownership. Title and company have both NOT NULL and CHECK constraints to prevent empty strings. There's also a deleted_at column for soft deletes — instead of removing the row, I set a timestamp so the data is preserved and applications referencing that job stay intact.
+The applications table is a junction table connecting users and jobs — it represents a many-to-many relationship. The key constraint is UNIQUE(user_id, job_id) which prevents a user from applying to the same job twice. I also use ON CONFLICT DO NOTHING on inserts to make the apply endpoint idempotent — safe to retry without creating duplicates.
+I have indexes on applications.job_id and applications.user_id for the recruiter and candidate query routes, and a composite index on jobs(deleted_at, created_at DESC) for the job listing query.
+
+
 ---
