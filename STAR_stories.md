@@ -69,3 +69,56 @@ During the refactor, I accidentally left a call to `client.query("COMMIT")` outs
 ### Result
 
 The refactored controller became simpler and more reliable because transaction management was centralized inside the `withTransaction` helper. I also gained a much deeper understanding of JavaScript variable scope, callback execution, and why transaction lifecycle management should be owned by a single abstraction rather than individual controllers.
+
+
+## Interview Talk Tracks
+
+### Caching talk track
+"How did you implement caching in your project?"
+I added an in-memory TTL cache for GET /jobs/:id. On the first request, 
+the server queries PostgreSQL and stores the result in a JavaScript object 
+with an expiry timestamp. On subsequent requests, it checks the cache first 
+— if the entry exists and hasn't expired, it returns immediately without 
+hitting the database. I saw a 77x speedup on cache hits — 232ms down to 3ms.
+
+I also implemented cache invalidation — when a job is updated or deleted, 
+I delete the cache entry so the next read gets fresh data from the database. 
+Without invalidation, clients would see stale data after updates.
+
+In production I'd use Redis instead of in-memory, because in-memory cache 
+doesn't survive server restarts and doesn't work across multiple instances.
+
+### Pagination talk track
+"How did you implement pagination?"
+I used LIMIT/OFFSET pagination on the applications endpoint. The client 
+sends page and limit as query parameters. I calculate the offset as 
+(page - 1) * limit and pass both to PostgreSQL.
+
+The tradeoff is that at large offsets, PostgreSQL still scans and discards 
+all the skipped rows before returning results — so it gets slower on deep 
+pages. The alternative is cursor pagination, where you pass the last seen 
+id or timestamp and query WHERE id > $1. That's faster at scale but you 
+can't jump to arbitrary pages.
+
+I kept offset pagination because the dataset is small and it's simpler 
+to implement correctly.
+
+### Indexing talk track
+"Did you add any indexes? Why?"
+Yes. I added three indexes based on the most frequent query patterns.
+
+For the recruiter view — GET /jobs/:id/applications — I added an index on 
+applications.job_id because that's the WHERE clause column.
+
+For the candidate view — GET /applications/me — I added an index on 
+applications.user_id for the same reason.
+
+For the job listing — GET /jobs — I added a composite index on 
+jobs(deleted_at, created_at DESC) because every query filters by 
+deleted_at IS NULL and orders by created_at.
+
+I verified the indexes using EXPLAIN ANALYZE. On a small dataset PostgreSQL 
+preferred sequential scans, but when I forced index usage with 
+SET enable_seqscan = off, the index scan worked correctly.
+
+
