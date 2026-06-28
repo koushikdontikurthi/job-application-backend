@@ -230,3 +230,31 @@ POST /auth/signup is NOT safe to retry — second attempt returns 409.
 If the database is unavailable, all endpoints return 500.
 JWT errors return 401 with specific codes: TOKEN_EXPIRED or INVALID_TOKEN.
 Validation errors return 400 with code VALIDATION_ERROR.
+
+## API Reference
+
+### Auth
+
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|---------------|-------------|
+| POST | /auth/signup | No | Create a new user account |
+| POST | /auth/login | No | Login and receive JWT token |
+| GET | /auth/me | Yes | Get current authenticated user |
+
+### Jobs
+
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|---------------|-------------|
+| POST | /jobs | Yes | Create a new job |
+| GET | /jobs | No | List all active jobs |
+| GET | /jobs/:id | No | Get a single job by id |
+| PUT | /jobs/:id | Yes | Update a job (owner only) |
+| DELETE | /jobs/:id | Yes | Soft delete a job (owner only) |
+| GET | /jobs/:id/applications | Yes | List all applicants for a job |
+
+### Applications
+
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|---------------|-------------|
+| POST | /applications | Yes | Apply to a job |
+| GET | /applications/me | Yes | Get all jobs you've applied to |
