@@ -38,7 +38,12 @@ const getApplicationsForJob = async (req, res, next) => {
     const { id } = req.params;
 
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+    const MAX_LIMIT = 50;
+    const DEFAULT_LIMIT = 20;
+
+    let limit = Number(req.query.limit) || DEFAULT_LIMIT;
+    if (limit > MAX_LIMIT) limit = MAX_LIMIT;
+    if (limit < 1) limit = DEFAULT_LIMIT;
     const offset = (page - 1) * limit;
 
     const result = await query(
