@@ -903,12 +903,20 @@ The ON CONFLICT DO NOTHING makes the operation idempotent. If the user applies t
 If the insert returns no rows — the application already existed — I return 200 with a message saying so. If it returns a row — new application — I return 201.
 If anything throws, withTransaction automatically runs ROLLBACK. If everything succeeds, it runs COMMIT and releases the client back to the pool.
 
-## Security Audit (May 11)
+  ## What I'd Improve Next
 
-Audited all routes for auth and validation coverage:
-- All mutation routes (POST, PUT, DELETE) require authMiddleware
-- All routes accepting a body have a corresponding validator
-- Public routes (GET /jobs, GET /jobs/:id) intentionally have no auth
-- Audit found no gaps — coverage was already correct from per-route 
-  validator work completed Apr 7
+- Move the in-memory cache to Redis so it survives server restarts and 
+  works across multiple instances
+- Replace LIMIT/OFFSET pagination with cursor-based pagination for the 
+  recruiter applications view, since it will scale better at large page depths
+- Add a proper migration system (e.g. node-pg-migrate) instead of a single 
+  schema.sql that gets dropped and recreated
+- Move notification sending to a real message queue (BullMQ + Redis) 
+  instead of fire-and-forget
+- Add role-based authorization (recruiter vs candidate) instead of 
+  treating all users the same
+- Add structured logging (e.g. Winston or Pino) instead of console.log 
+  for production-grade observability
+- Add API rate limiting per user instead of just per IP, since IPs can 
+  be shared (NAT, corporate networks)
 ---
