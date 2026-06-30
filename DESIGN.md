@@ -903,4 +903,12 @@ The ON CONFLICT DO NOTHING makes the operation idempotent. If the user applies t
 If the insert returns no rows — the application already existed — I return 200 with a message saying so. If it returns a row — new application — I return 201.
 If anything throws, withTransaction automatically runs ROLLBACK. If everything succeeds, it runs COMMIT and releases the client back to the pool.
 
+## Security Audit (May 11)
+
+Audited all routes for auth and validation coverage:
+- All mutation routes (POST, PUT, DELETE) require authMiddleware
+- All routes accepting a body have a corresponding validator
+- Public routes (GET /jobs, GET /jobs/:id) intentionally have no auth
+- Audit found no gaps — coverage was already correct from per-route 
+  validator work completed Apr 7
 ---
