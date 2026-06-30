@@ -258,3 +258,11 @@ Validation errors return 400 with code VALIDATION_ERROR.
 |--------|----------|---------------|-------------|
 | POST | /applications | Yes | Apply to a job |
 | GET | /applications/me | Yes | Get all jobs you've applied to |
+
+## Running Tests
+
+    npm test
+
+Tests cover:
+- Auth: signup, login, validation, duplicate email handling
+- Applications: create, duplicate prevention, validation, auth checks
